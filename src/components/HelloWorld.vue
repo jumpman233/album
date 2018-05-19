@@ -142,7 +142,7 @@ export default {
   data () {
     return {
       msg: 'Welcome to Your Vue.js App',
-      deleteMode: true,
+      deleteMode: false,
       loginDialogVisible: false,
       loginDialogLoading: false,
       loginSuccessVisible: false,
@@ -175,11 +175,9 @@ export default {
     ])
   },
   created() {
-    console.log(this)
     this.$store.dispatch('getInfo');
 
     this.$store.dispatch('getDir', { path: '' }).then((res)=>{
-      console.log(this)
     });
   },
   components: {
