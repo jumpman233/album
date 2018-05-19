@@ -263,7 +263,7 @@ app.get('/api/getDir', function (req, res) {
           return {
             type: 2,
             name: item,
-            url: `http://127.0.0.1:${server.address().port}/${username}/${reqPath}/${item}`
+            url: `http://45.32.11.81:${server.address().port}/${username}/${reqPath}/${item}`
           };
         }
       });
