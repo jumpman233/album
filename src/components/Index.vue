@@ -92,8 +92,14 @@
       </el-main>
       <div class="tip-login" v-if="!isLogin">
         Please
-        <a href="javascript:;" @click="loginDialogVisible = true;">Login</a>
+        <a href="javascript:;" @click="loginDialogVisible = true">Login</a>
         first to visit your album
+      </div>
+      <div class="tip-upload" v-if="isLogin && isEmpty">
+        The directory is empty. You can
+        <a href="javascript:;" @click="newFolderDialogVisible = true">Create Folder</a>
+        or
+        <a href="javascript:;" @click="upload()">Upload Img</a>
       </div>
     </el-container>
     <div class="img-detail-wrapper"
@@ -275,6 +281,9 @@ export default {
       });
 
       return path;
+    },
+    isEmpty() {
+      return this.dirs.length === 0 && this.photos.length === 0;
     },
     sepPath() {
       return this.curPath.split('/').filter((item) => item !== '');
