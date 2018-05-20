@@ -2,33 +2,54 @@
   <div>
     <el-container>
       <el-header class="page-header">
-        <div class="main-content">
-          <h3 class="main-title">Album</h3>
-          <span class="username" v-if="username">Hi, <strong>{{ username }}</strong></span>
-        </div>
+        <h3 class="main-title">Album</h3>
         <div>
-          <el-button type="primary" @click="loginDialogVisible = true" round>
+          <span class="username" v-if="username">Hi, <strong>{{ username }}</strong></span>
+          <el-button type="primary" @click="loginDialogVisible = true" round v-if="!isLogin">
             Login
           </el-button>
-          <el-button type="primary" @click="registerDialogVisible = true" round>
+          <el-button type="primary" @click="registerDialogVisible = true" round v-if="!isLogin">
             Register
           </el-button>
-          <el-button type="primary" round @click="upload()">
-            Upload <input type="file" id="upload" @change="change()" style="display: none;">
-          </el-button>
-          <el-button type="primary" round @click="returnPrev()">Return</el-button>
-          <el-button type="primary" round @click="deleteMode = !deleteMode">change delete mode</el-button>
-          <el-button type="primary" round @click="deletePath()">delete</el-button>
-          <el-button type="primary" round @click="newFolderDialogVisible = true">New Folder</el-button>
-          <el-button type="primary" round @click="logout()">Log Out</el-button>
+          <el-button type="primary" round @click="logout()" v-if="isLogin">Log Out</el-button>
         </div>
       </el-header>
-      <el-main class="page-main">
+      <el-main class="page-main" v-loading="containerLoadingVisible">
+        <div class="btn-group" v-if="isLogin">
+          <el-button type="primary"
+                     @click="upload()"
+                     icon="el-icon-upload2">
+            Upload <input type="file" id="upload" @change="change()" style="display: none;">
+          </el-button>
+
+          <el-button type="primary"
+                     @click="returnPrev()"
+                     icon="el-icon-back"
+                     v-if="curPath">Return</el-button>
+
+          <el-button type="primary"
+                     @click="deleteMode = !deleteMode"
+                     v-if="!deleteMode"
+                     icon="el-icon-delete">
+            Delete
+          </el-button>
+
+          <el-button type="primary"
+                     v-if="deleteMode"
+                     @click="deletePath()">
+            Confirm delete
+          </el-button>
+
+          <el-button type="primary"
+                     @click="newFolderDialogVisible = true"
+                     icon="el-icon-plus">New Folder</el-button>
+        </div>
         <div class="main-wrapper">
           <div class="folder item"
                v-for="(dir, index) in dirs"
                :key="dir.name"
-               @click="clickFolder(dir)">
+               @click="clickFolder(dir)"
+               :title="dir.name">
             <i class="folder-bk"></i>
             <el-checkbox v-if="deleteMode"
                          v-model="dir.checked"
@@ -42,10 +63,10 @@
           <div class="photo item"
                v-for="(photo, index) in photos"
                :key="photo.name"
-               @click="clickPhoto(photo)">
+               @click="clickPhoto(photo)"
+               :title="photo.name">
             <img :src="photo.url"
-                 :alt="photo.name"
-                 :title="photo.name">
+                 :alt="photo.name">
             <el-checkbox v-if="deleteMode"
                          v-model="photo.checked"
                          class="item-text">
@@ -129,6 +150,30 @@
       width="50%">
       <span>{{ newFolderFailMsg }}</span>
     </el-dialog>
+    <el-dialog
+      title="Upload Success"
+      :visible.sync="uploadSuccessVisible"
+      width="50%">
+      <span>Upload image success!</span>
+    </el-dialog>
+    <el-dialog
+      title="Upload Fail"
+      :visible.sync="uploadFailVisible"
+      width="50%">
+      <span>Upload image fail: {{ uploadFailMsg }}</span>
+    </el-dialog>
+    <el-dialog
+      title="Delete Success"
+      :visible.sync="deleteSuccessVisible"
+      width="50%">
+      <span>Delete success!</span>
+    </el-dialog>
+    <el-dialog
+      title="Delete Fail"
+      :visible.sync="deleteFailVisible"
+      width="50%">
+      <span>Delete image fail: {{ deleteFailMsg }}</span>
+    </el-dialog>
   </div>
 </template>
 
@@ -162,7 +207,14 @@ export default {
       newFolderSuccessVisible: false,
       newFolderFailVisible: false,
       inputFolderName: '',
-      newFolderFailMsg: ''
+      newFolderFailMsg: '',
+      uploadSuccessVisible: false,
+      uploadFailVisible: false,
+      uploadFailMsg: '',
+      deleteSuccessVisible: false,
+      deleteFailVisible: false,
+      deleteFailMsg: '',
+      containerLoadingVisible: false
     }
   },
   computed: {
@@ -176,6 +228,9 @@ export default {
   },
   created() {
     this.$store.dispatch('getInfo');
+    window.setInterval(() => {
+      console.log(this.isLogin)
+    }, 2000)
 
     this.$store.dispatch('getDir', { path: '' }).then((res)=>{
     });
@@ -191,6 +246,10 @@ export default {
       let file = document.getElementById('upload').files[0],
           _this = this;
 
+      if(!file) {
+        return;
+      }
+
       let param = new FormData();
 
       let fr= new FileReader();
@@ -199,7 +258,23 @@ export default {
         param.append('path', _this.curPath || '');
         param.append('file', this.result);
 
-        _this.$store.dispatch('uploadImg', param);
+        _this.containerLoadingVisible = true;
+
+        _this.$store.dispatch('uploadImg', param)
+          .then((msg) => {
+            _this.containerLoadingVisible = false;
+
+            if(msg === 'success') {
+              _this.uploadSuccessVisible = true;
+            } else {
+              _this.uploadFailVisible = true;
+              _this.uploadFailMsg = msg || 'something wrong';
+            }
+          }, (msg) => {
+            _this.containerLoadingVisible = false;
+            _this.uploadFailVisible = true;
+            _this.uploadFailMsg = msg || 'something wrong';
+          });
       }
 
       fr.readAsDataURL(file);
@@ -212,19 +287,24 @@ export default {
         password: this.inputPassword
       })
         .then((msg) => {
+          this.loginDialogLoading = false;
+          this.loginDialogVisible = false;
+
           if(this.isLogin) {
             this.loginSuccessVisible = true;
-            this.loginDialogLoading = false;
-            this.loginDialogVisible = false;
             this.$store.dispatch('getDir', {
               path: this.curPath
             })
           } else {
             this.loginFailVisible = true;
-            this.loginDialogLoading = false;
-            this.loginDialogVisible = false;
             this.loginFailMsg = `Login fail: ${msg || 'something wrong'}`;
           }
+        }, (msg) => {
+          this.loginDialogLoading = false;
+          this.loginDialogVisible = false;
+
+          this.loginFailVisible = true;
+          this.loginFailMsg = `Login fail: ${msg || 'something wrong'}`;
         });
     },
     clickRegister() {
@@ -247,6 +327,11 @@ export default {
             this.registerFailVisible = true;
             this.registerFailMsg = `Register fail: ${msg || 'something wrong'}`;
           }
+        }, (msg) => {
+          this.registerDialogLoading = false;
+
+          this.registerFailVisible = true;
+          this.registerFailMsg = `Register fail: ${msg || 'something wrong'}`;
         });
     },
     clickFolder(dir) {
@@ -279,6 +364,11 @@ export default {
           this.newFolderFailVisible = true;
           this.newFolderFailMsg = `create fail: ${msg || 'something wrong'}`;
         }
+      }, (msg) => {
+        this.newFolderDialogLoading = false;
+
+        this.newFolderFailVisible = true;
+        this.newFolderFailMsg = `create fail: ${msg || 'something wrong'}`;
       })
     },
     returnPrev() {
@@ -297,13 +387,39 @@ export default {
       });
       photoDirs.forEach((item) => {
         path.push(`${this.curPath}/${item.name}`);
-      })
+      });
+
+      if(path.length === 0) {
+        this.deleteMode = false;
+        return;
+      }
+
+      this.containerLoadingVisible = true;
+
       this.$store.dispatch('deletePath', {
         path
-      })
+      }).then((msg) => {
+        this.containerLoadingVisible = false;
+        this.deleteMode = false;
+
+        if(msg === 'success') {
+          this.deleteSuccessVisible = true;
+        } else {
+          this.deleteFailVisible = true;
+          this.deleteFailMsg = msg || 'something wrong';
+        }
+      }, (msg) => {
+        this.containerLoadingVisible = false;
+        this.deleteMode = false;
+
+        this.deleteFailVisible = true;
+        this.deleteFailMsg = msg || 'something wrong';
+      });
     },
     logout () {
-      this.$store.dispatch('logout');
+      this.$store.dispatch('logout')
+        .then(() => {
+        });
     }
   }
 }
@@ -347,14 +463,18 @@ a {
   }
 
   .page-header .username {
-    align-self: flex-end;
-    font-size: 12px;
-    margin-left: 25px;
+    font-size: 20px;
+    margin-right: 20px;
     color: #42b983;
   }
 
-  .page-main {
+  .page-main.el-main {
+    padding-top: 10px;
+  }
 
+  .page-main .btn-group {
+    display: flex;
+    justify-content: flex-start;
   }
 
   .page-main .main-wrapper {

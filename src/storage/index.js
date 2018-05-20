@@ -41,6 +41,7 @@ const store = new Vuex.Store({
       axios.get('/api/info')
         .then((res) => {
           if(res.data.code === 1) {
+            commit('setLogin', res.data.data.isLogin);
             commit('setUsername', res.data.data.username);
           }
         })
@@ -104,12 +105,12 @@ const store = new Vuex.Store({
         }
       })
     },
-    deletePath ({ commit, dispatch }, { path = '' }) {
+    deletePath ({ commit, dispatch, state }, { path = '' }) {
       return axios.post('/api/deleteDir', {
         path
       }).then((res) => {
         if(res.data.code === 1) {
-          return dispatch('getDir', path);
+          return dispatch('getDir', { path: state.curPath });
         } else {
           return res.data.msg;
         }
@@ -126,13 +127,18 @@ const store = new Vuex.Store({
         } else {
           return res.data.msg;
         }
+      }, (res) => {
+        return 'server error';
       })
     },
-    logout ({ dispatch }) {
+    logout ({ commit }) {
       return axios.post('/api/logout')
         .then((res) => {
           if(res.data.code === 1) {
-            return dispatch('setLogin', false);
+            commit('setLogin', false);
+            commit('setUsername', '');
+            commit('setDirs', []);
+            commit('setPhotos', []);
           }
         })
     }

@@ -15,6 +15,8 @@ var identityKey = 'skey';
 
 var db = new sqlite3.Database('./database.db');
 
+const defaultUsername = 'admin';
+
 async function hasUser(username, password) {
   return new Promise((resolve, reject) => {
     db.each(`SELECT count(*) AS count from user where name='${username}' and password='${password}'`, function (err, row) {
@@ -96,7 +98,7 @@ app.use(session({
 }));
 
 multer({
-  limits: { fieldSize: 25 * 1024 * 1024 }
+  limits: { fieldSize: 1024 * 1024 * 1024 }
 })
 
 let upload = multer({
@@ -144,7 +146,7 @@ app.post('/api/logout', function (req, res) {
 
 app.get('/api/info', function (req, res) {
   let sess = req.session,
-      username = sess.username || '',
+      username = sess.username || defaultUsername,
       isLogin = !!username;
 
   res.json({ code: 1, data: { username, isLogin } });
@@ -182,7 +184,7 @@ app.post('/api/upload', upload.array('file', 10), async function (req, res) {
       file = req.body.file;
 
   let sess = req.session,
-      username = sess.username || '',
+      username = sess.username || defaultUsername,
       isLogin = !!username;
 
   if(!isLogin) {
@@ -212,7 +214,7 @@ app.post('/api/createDir', async function (req, res) {
       dirName = req.body.dirName || '';
 
   let sess = req.session,
-    username = sess.username || '',
+    username = sess.username || defaultUsername,
     isLogin = !!username;
 
   if(!isLogin) {
@@ -238,7 +240,7 @@ app.get('/api/getDir', function (req, res) {
   let reqPath = req.query.path || '';
 
   let sess = req.session,
-    username = sess.username || '',
+    username = sess.username || defaultUsername,
     isLogin = !!username;
 
   if(!isLogin) {
@@ -263,7 +265,7 @@ app.get('/api/getDir', function (req, res) {
           return {
             type: 2,
             name: item,
-            url: `http://45.32.11.81:${server.address().port}/${username}/${reqPath}/${item}`
+            url: `http://127.0.0.1:${server.address().port}/${username}/${reqPath}/${item}`
           };
         }
       });
@@ -276,7 +278,7 @@ app.post('/api/deleteDir', async function (req, res) {
   let reqPath = req.body.path || '';
 
   let sess = req.session,
-    username = sess.username || '',
+    username = sess.username || defaultUsername,
     isLogin = !!username,
     targetPath = '';
 
