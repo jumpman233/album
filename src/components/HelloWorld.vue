@@ -36,8 +36,8 @@
 
           <el-button type="primary"
                      v-if="deleteMode"
-                     @click="deletePath()">
-            Confirm delete
+                     @click="clickConfirmDelete()">
+            {{ paths.length === 0 ? 'Cancel Delete' : 'Confirm Delete' }}
           </el-button>
 
           <el-button type="primary"
@@ -78,7 +78,24 @@
           </div>
         </div>
       </el-main>
+      <div class="tip-login" v-if="!isLogin">
+        Please
+        <a href="javascript:;" @click="loginDialogVisible = true;">Login</a>
+        first to visit your album
+      </div>
     </el-container>
+    <div class="img-detail-wrapper"
+         v-if="imgDetailVisible">
+      <i class="icon-close"
+         @click="imgDetailVisible = false"></i>
+      <div class="img-detail-header">
+        {{ curImgName }}
+      </div>
+      <div class="img-wrapper">
+        <img :src="curImgUrl"
+             :alt="curImgName">
+      </div>
+    </div>
     <el-dialog
       title="Register"
       :visible.sync="registerDialogVisible"
@@ -163,6 +180,17 @@
       <span>Upload image fail: {{ uploadFailMsg }}</span>
     </el-dialog>
     <el-dialog
+      title="Delete Confirm"
+      :visible.sync="deleteDialogVisible"
+      width="50%"
+      v-loading="deleteDialogLoading">
+      <span>Are you sure to delete?</span>
+      <span slot="footer" class="dialog-footer">
+        <el-button @click="deleteDialogVisible = false">Cancel</el-button>
+        <el-button type="primary" @click="deletePath()">Confirm</el-button>
+      </span>
+    </el-dialog>
+    <el-dialog
       title="Delete Success"
       :visible.sync="deleteSuccessVisible"
       width="50%">
@@ -211,13 +239,31 @@ export default {
       uploadSuccessVisible: false,
       uploadFailVisible: false,
       uploadFailMsg: '',
+      deleteDialogVisible: false,
+      deleteDialogLoading: false,
       deleteSuccessVisible: false,
       deleteFailVisible: false,
       deleteFailMsg: '',
-      containerLoadingVisible: false
+      containerLoadingVisible: false,
+      imgDetailVisible: false,
+      curImgUrl: '',
+      curImgName: ''
     }
   },
   computed: {
+    paths() {
+      let filDirs = this.dirs.filter((item) => item.checked),
+        photoDirs = this.photos.filter((item) => item.checked),
+        path = [];
+      filDirs.forEach((item) => {
+        path.push(`${this.curPath}/${item.name}`);
+      });
+      photoDirs.forEach((item) => {
+        path.push(`${this.curPath}/${item.name}`);
+      });
+
+      return path;
+    },
     ...mapGetters([
       'isLogin',
       'username',
@@ -228,9 +274,6 @@ export default {
   },
   created() {
     this.$store.dispatch('getInfo');
-    window.setInterval(() => {
-      console.log(this.isLogin)
-    }, 2000)
 
     this.$store.dispatch('getDir', { path: '' }).then((res)=>{
     });
@@ -334,9 +377,15 @@ export default {
           this.registerFailMsg = `Register fail: ${msg || 'something wrong'}`;
         });
     },
+    clickConfirmDelete() {
+      if(this.paths.length === 0) {
+        this.deleteMode = false;
+        return;
+      }
+      this.deleteDialogVisible = true
+    },
     clickFolder(dir) {
       if(this.deleteMode) {
-        console.log(dir.checked)
         dir.checked = !dir.checked;
       } else {
         this.$store.dispatch('getDir', {
@@ -347,6 +396,10 @@ export default {
     clickPhoto(photo) {
       if(this.deleteMode) {
         photo.checked = !photo.checked;
+      } else {
+        this.imgDetailVisible = true;
+        this.curImgName = photo.name;
+        this.curImgUrl = photo.url;
       }
     },
     clickNewFolder() {
@@ -379,28 +432,19 @@ export default {
       }
     },
     deletePath() {
-      let filDirs = this.dirs.filter((item) => item.checked),
-          photoDirs = this.photos.filter((item) => item.checked),
-          path = [];
-      filDirs.forEach((item) => {
-        path.push(`${this.curPath}/${item.name}`);
-      });
-      photoDirs.forEach((item) => {
-        path.push(`${this.curPath}/${item.name}`);
-      });
-
-      if(path.length === 0) {
+      if(this.paths.length === 0) {
         this.deleteMode = false;
         return;
       }
 
-      this.containerLoadingVisible = true;
+      this.deleteDialogLoading = true;
 
       this.$store.dispatch('deletePath', {
-        path
+        path: this.paths
       }).then((msg) => {
-        this.containerLoadingVisible = false;
+        this.deleteDialogLoading = false;
         this.deleteMode = false;
+        this.deleteDialogVisible = false;
 
         if(msg === 'success') {
           this.deleteSuccessVisible = true;
@@ -409,7 +453,7 @@ export default {
           this.deleteFailMsg = msg || 'something wrong';
         }
       }, (msg) => {
-        this.containerLoadingVisible = false;
+        this.deleteDialogLoading = false;
         this.deleteMode = false;
 
         this.deleteFailVisible = true;
@@ -521,5 +565,52 @@ a {
 
   .page-main .el-checkbox__label {
     font-size: 20px !important;
+  }
+
+  .img-detail-wrapper {
+    position: fixed;
+    width: 100%;
+    height: 100%;
+    top: 0;
+    left: 0;
+    display: flex;
+    align-items: center;
+    flex-direction: column;
+    background: #000;
+  }
+
+
+  .img-detail-header {
+    width: 100%;
+    height: 80px;
+    display: flex;
+    color: #fff;
+    align-items: center;
+    justify-content: center;
+    font-size: 32px;
+  }
+
+  .img-detail-wrapper .img-wrapper {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-grow: 1;
+  }
+
+  .img-detail-wrapper .img-wrapper img {
+    max-width: 100%;
+    height: auto;
+  }
+
+  .img-detail-wrapper .icon-close {
+    display: inline-block;
+    background: url(../img/close.png) 0 0 no-repeat;
+    width: 25px;
+    height: 25px;
+    cursor: pointer;
+    background-size: 25px 25px;
+    position: absolute;
+    right: 20px;
+    top: 20px;
   }
 </style>
