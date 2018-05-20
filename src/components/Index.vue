@@ -44,7 +44,7 @@
                      @click="newFolderDialogVisible = true"
                      icon="el-icon-plus">New Folder</el-button>
         </div>
-        <div class="path">
+        <div class="path" v-if="isLogin">
           Current Path:
           <el-breadcrumb separator="/">
             <el-breadcrumb-item>
