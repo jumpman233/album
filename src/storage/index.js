@@ -94,12 +94,12 @@ const store = new Vuex.Store({
         }
       });
     },
-    newFolder ({ commit, dispatch }, { path = '', dirName = '' }) {
+    newFolder ({ commit, state, dispatch }, { path = '', dirName = '' }) {
       return axios.post('/api/createDir', {
         path, dirName
       }).then((res) => {
         if(res.data.code === 1 && res.data.data) {
-          return dispatch('getDir', path);
+          return dispatch('getDir', { path: state.curPath  });
         } else {
           return res.data.msg;
         }
