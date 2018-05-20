@@ -510,7 +510,8 @@ a {
   }
 
   .page-main .main-wrapper .item .item-text {
-    margin: 20px 0 0;
+    margin: 20px auto 0;
+    white-space: nowrap;
     font-size: 20px !important;
     color: #585858;
     max-width: 150px;
