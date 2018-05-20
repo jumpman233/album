@@ -44,6 +44,7 @@
                      @click="newFolderDialogVisible = true"
                      icon="el-icon-plus">New Folder</el-button>
         </div>
+        <div class="path">Current Path: <span class="path-name">{{ curPath || '/' }}</span></div>
         <div class="main-wrapper">
           <div class="folder item"
                v-for="(dir, index) in dirs"
@@ -102,7 +103,7 @@
       width="50%"
       v-loading="registerDialogLoading">
       <el-input placeholder="Your Username" v-model="inputRegisterUsername" style="margin-bottom: 20px;"></el-input>
-      <el-input placeholder="Your Password" v-model="inputRegisterPassword"></el-input>
+      <el-input placeholder="Your Password" type="password" v-model="inputRegisterPassword"></el-input>
       <span slot="footer" class="dialog-footer">
         <el-button @click="registerDialogVisible = false">Cancel</el-button>
         <el-button type="primary" @click="clickRegister()">Confirm</el-button>
@@ -126,7 +127,7 @@
       width="50%"
       v-loading="loginDialogLoading">
       <el-input placeholder="Your Username" v-model="inputUsername" style="margin-bottom: 20px;"></el-input>
-      <el-input placeholder="Your Password" v-model="inputPassword"></el-input>
+      <el-input placeholder="Your Password" type="password" v-model="inputPassword"></el-input>
       <span slot="footer" class="dialog-footer">
         <el-button @click="loginDialogVisible = false">Cancel</el-button>
         <el-button type="primary" @click="clickLogin()">Confirm</el-button>
@@ -612,5 +613,19 @@ a {
     position: absolute;
     right: 20px;
     top: 20px;
+  }
+
+  .path {
+    margin: 20px 0;
+    font-size: 20px;
+    display: flex;
+    align-self: flex-start;
+  }
+
+  .path .path-name {
+    display: inline-block;
+    margin-left: 10px;
+    color: #409EFF;
+    font-weight: bold;
   }
 </style>
