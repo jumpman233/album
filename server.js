@@ -16,6 +16,7 @@ var identityKey = 'skey';
 var db = new sqlite3.Database('./database.db');
 
 const defaultUsername = 'admin';
+const ip = '45.32.11.81';
 
 async function hasUser(username, password) {
   return new Promise((resolve, reject) => {
@@ -265,7 +266,7 @@ app.get('/api/getDir', function (req, res) {
           return {
             type: 2,
             name: item,
-            url: `http://127.0.0.1:${server.address().port}/${username}/${reqPath}/${item}`
+            url: `http://${ip}:${server.address().port}/${username}/${reqPath}/${item}`
           };
         }
       });
