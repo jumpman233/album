@@ -290,8 +290,10 @@ export default {
   created() {
     this.$store.dispatch('getInfo');
 
-    this.$store.dispatch('getDir', { path: '' }).then((res)=>{
-    });
+    this.containerLoadingVisible = true;
+    this.$store.dispatch('getDir', { path: '' })
+      .then(() => this.containerLoadingVisible = false,
+        () => this.containerLoadingVisible = false);
   },
   components: {
     Container, Header, Footer, Main, Button, Dialog, Input, Checkbox, BreadcrumbItem, Breadcrumb
@@ -403,9 +405,12 @@ export default {
       if(this.deleteMode) {
         dir.checked = !dir.checked;
       } else {
+        this.containerLoadingVisible = true;
+
         this.$store.dispatch('getDir', {
           path: `${this.curPath}/${dir.name}`
-        })
+        }).then(() => this.containerLoadingVisible = false,
+          () => this.containerLoadingVisible = false)
       }
     },
     clickPhoto(photo) {
@@ -424,11 +429,9 @@ export default {
 
       this.$store.dispatch('getDir', {
         path: this.sepPath.slice(0, index + 1).join('/')
-      }).then(()=>{
-        this.containerLoadingVisible = false;
-      }, ()=>{
-        this.containerLoadingVisible = false;
-      });
+      }).then(() => this.containerLoadingVisible = false,
+        ()=>this.containerLoadingVisible = false
+      );
     },
     clickNewFolder() {
       this.newFolderDialogLoading = true;
@@ -454,9 +457,11 @@ export default {
     },
     returnPrev() {
       if(this.curPath) {
+        this.containerLoadingVisible = true;
         this.$store.dispatch('getDir', {
           path: this.curPath.substring(0, this.curPath.lastIndexOf('/'))
-        });
+        }).then(() => this.containerLoadingVisible = false,
+          () => this.containerLoadingVisible = false);
       }
     },
     deletePath() {
