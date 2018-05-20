@@ -44,7 +44,18 @@
                      @click="newFolderDialogVisible = true"
                      icon="el-icon-plus">New Folder</el-button>
         </div>
-        <div class="path">Current Path: <span class="path-name">{{ curPath || '/' }}</span></div>
+        <div class="path">
+          Current Path:
+          <el-breadcrumb separator="/">
+            <el-breadcrumb-item>
+              <a href="javascript:;" @click="clickPath('/', -1)">home</a>
+            </el-breadcrumb-item>
+            <el-breadcrumb-item v-for="(item, index) in sepPath"
+                                :key="index">
+              <a href="javascript:;" @click="clickPath(item, index)">{{ item }}</a>
+            </el-breadcrumb-item>
+          </el-breadcrumb>
+        </div>
         <div class="main-wrapper">
           <div class="folder item"
                v-for="(dir, index) in dirs"
@@ -207,7 +218,7 @@
 </template>
 
 <script>
-import { Container, Header, Footer, Main, Button, ButtonGroup, Dialog, Input, Checkbox } from 'element-ui';
+import { Container, Header, Footer, Main, Button, ButtonGroup, Dialog, Input, Checkbox, Breadcrumb, BreadcrumbItem } from 'element-ui';
 import axios from 'axios';
 import { mapGetters } from 'vuex';
 
@@ -265,6 +276,9 @@ export default {
 
       return path;
     },
+    sepPath() {
+      return this.curPath.split('/').filter((item) => item !== '');
+    },
     ...mapGetters([
       'isLogin',
       'username',
@@ -280,7 +294,7 @@ export default {
     });
   },
   components: {
-    Container, Header, Footer, Main, Button, Dialog, Input, Checkbox
+    Container, Header, Footer, Main, Button, Dialog, Input, Checkbox, BreadcrumbItem, Breadcrumb
   },
   methods: {
     upload() {
@@ -402,6 +416,19 @@ export default {
         this.curImgName = photo.name;
         this.curImgUrl = photo.url;
       }
+    },
+    clickPath(item, index) {
+      this.containerLoadingVisible = true;
+
+      console.log(this.sepPath.slice(0, index + 1).join('/'))
+
+      this.$store.dispatch('getDir', {
+        path: this.sepPath.slice(0, index + 1).join('/')
+      }).then(()=>{
+        this.containerLoadingVisible = false;
+      }, ()=>{
+        this.containerLoadingVisible = false;
+      });
     },
     clickNewFolder() {
       this.newFolderDialogLoading = true;
@@ -620,12 +647,10 @@ a {
     font-size: 20px;
     display: flex;
     align-self: flex-start;
+    align-items: center;
   }
 
-  .path .path-name {
-    display: inline-block;
-    margin-left: 10px;
-    color: #409EFF;
-    font-weight: bold;
+  .path .el-breadcrumb {
+    margin-left: 20px;
   }
 </style>
