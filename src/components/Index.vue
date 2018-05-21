@@ -2,7 +2,9 @@
   <div>
     <el-container>
       <el-header class="page-header">
-        <h3 class="main-title">Album</h3>
+        <div class="logo-wrapper">
+          <img class="logo" src="../img/logo.svg" alt="">
+        </div>
         <div>
           <span class="username" v-if="username">Hi, <strong>{{ username }}</strong></span>
           <el-button type="primary" @click="loginDialogVisible = true" round v-if="!isLogin">
@@ -666,5 +668,9 @@ a {
 
   .path .el-breadcrumb {
     margin-left: 20px;
+  }
+
+  .logo {
+    width: 50px;
   }
 </style>
