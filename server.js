@@ -16,7 +16,7 @@ var identityKey = 'skey';
 var db = new sqlite3.Database('./database.db');
 
 const defaultUsername = '';
-const ip = '45.32.11.81';
+const ip = '66.112.215.111';
 
 async function hasUser(username, password) {
   return new Promise((resolve, reject) => {
